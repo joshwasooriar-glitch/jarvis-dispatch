@@ -6,9 +6,9 @@ Demo company: **Brightline Heating & Air** (fictional). All customers, technicia
 ## Run it (Mac, Python 3.10+)
 
 ```bash
-cd jarvis-ops
-./run.sh            # venv + deps + smoke test + server
-# open http://localhost:8000
+git clone https://github.com/joshwasooriar-glitch/jarvis-dispatch.git
+cd jarvis-dispatch
+./run.sh
 ```
 
 Works with **zero API keys**: every sponsor sits behind a small adapter with a local mock, and the header chips show LIVE or MOCK for each one.
