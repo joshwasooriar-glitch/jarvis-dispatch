@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f15;--panel:#111922;--panel2:#16212c;--line:#22303e;--text:#e6edf3;--mute:#8b9bb0;
+  --cyan:#22d3ee;--orange:#f97316;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--violet:#a78bfa;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,#0f2a33 0,transparent 60%),var(--bg);color:var(--text);
+  font:15px/1.45 Inter,system-ui,-apple-system,sans-serif;min-height:100vh}
+header{display:flex;align-items:center;gap:18px;padding:14px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.reactor{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,#fff 0 18%,var(--cyan) 30%,#0e7490 60%,transparent 62%);
+  box-shadow:0 0 18px var(--cyan);animation:pulse 3s ease-in-out infinite}
+.reactor.busy{animation:pulse .7s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 30px var(--cyan),0 0 6px #fff}}
+.brand h1{margin:0;font-size:20px;letter-spacing:.14em;font-weight:800}
+.brand small{display:block;color:var(--mute);font-size:12px;letter-spacing:0}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.chip{display:flex;align-items:center;gap:7px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel);
+  font-size:12.5px;cursor:help}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.chip.live .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.chip.error .dot{background:var(--red)}
+.chip .m{font-family:var(--mono);font-size:10.5px;color:var(--mute)}
+main{display:grid;grid-template-columns:minmax(300px,1fr) minmax(380px,1.35fr) minmax(330px,1.1fr);gap:16px;padding:16px 22px 28px}
+@media (max-width:1100px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.panel h2{margin:0 0 12px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.samples{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.sample{text-align:left;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;font:inherit;font-size:13px}
+.sample:hover{border-color:var(--cyan)}
+.sample b{display:block;font-size:13px}
+.sample span{color:var(--mute);font-size:11.5px;font-family:var(--mono)}
+label{font-size:12px;color:var(--mute)}
+input,textarea{width:100%;background:#0b131b;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px;font:inherit}
+textarea{min-height:110px;resize:vertical}
+.row{display:flex;gap:8px;margin-top:10px}
+button.primary{flex:1;padding:12px;border:0;border-radius:10px;background:linear-gradient(90deg,#0891b2,var(--cyan));color:#001218;font-weight:800;font-size:15px;cursor:pointer;letter-spacing:.03em}
+button.primary:disabled{opacity:.5;cursor:wait}
+button.mic{width:52px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:20px;cursor:pointer}
+button.mic.on{background:var(--red);border-color:var(--red)}
+.convo{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.bubble{padding:11px 13px;border-radius:12px;max-width:94%;font-size:14.5px}
+.bubble.cust{background:#1c2733;align-self:flex-start;border-top-left-radius:3px}
+.bubble.jarvis{background:linear-gradient(135deg,#0c3440,#0b2530);border:1px solid #155e75;align-self:flex-end;border-top-right-radius:3px}
+.bubble.alert{background:linear-gradient(135deg,#3b0d0d,#2a0b0b);border-color:var(--red)}
+.who{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-bottom:4px;display:flex;justify-content:space-between;gap:8px}
+.replay{background:none;border:0;color:var(--cyan);cursor:pointer;font-size:12px}
+.timeline{display:flex;flex-direction:column;gap:8px}
+.step{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel2);animation:in .25s ease}
+@keyframes in{from{opacity:0;transform:translateY(4px)}}
+.step.ok{border-left-color:var(--green)}.step.warn{border-left-color:var(--amber)}.step.alert{border-left-color:var(--red);background:#1f1416}
+.step.wait{border-left-color:var(--violet)}
+.step .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.num{font-family:var(--mono);color:var(--mute);font-size:12px}
+.title{font-weight:700}
+.tag{font-size:10.5px;font-family:var(--mono);padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--mute)}
+.tag.sponsor{color:var(--cyan);border-color:#155e75}
+.tag.live{color:var(--green);border-color:#14532d}
+.tag.mock{color:var(--amber);border-color:#78350f}
+.tag.blocked,.tag.error{color:var(--red);border-color:#7f1d1d}
+.ms{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--mute)}
+.detail{margin-top:5px;font-size:13.5px;color:#c9d4e0}
+details{margin-top:6px}
+summary{cursor:pointer;color:var(--mute);font-size:12px}
+pre{white-space:pre-wrap;word-break:break-word;font-family:var(--mono);font-size:11.5px;background:#0b131b;border:1px solid var(--line);border-radius:8px;padding:8px;max-height:260px;overflow:auto;margin:6px 0 0}
+.shot{max-width:100%;border-radius:8px;border:1px solid var(--line);margin-top:6px}
+.empty{color:var(--mute);font-size:13.5px;padding:18px;text-align:center;border:1px dashed var(--line);border-radius:10px}
+.wo-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.prio{font-weight:800;font-size:13px;padding:6px 11px;border-radius:8px;letter-spacing:.06em}
+.P0{background:var(--red);color:#fff}.P1{background:var(--orange);color:#1a0a00}.P2{background:var(--amber);color:#1a1000}.P3{background:#334155;color:#e2e8f0}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;font-size:13.5px;margin-bottom:10px}
+.kv div:nth-child(odd){color:var(--mute)}
+.sub{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:14px 0 6px;font-weight:700}
+.evals{display:flex;flex-direction:column;gap:4px}
+.ev{display:flex;gap:8px;font-size:13px;align-items:flex-start}
+.ev .i{width:18px;text-align:center;font-weight:800}
+.ev.pass .i{color:var(--green)}.ev.fail .i{color:var(--red)}.ev.na{color:var(--mute)}
+.score{font-family:var(--mono);font-size:22px;font-weight:600}
+.action{border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:6px;font-size:13px;background:var(--panel2)}
+.action .a{display:flex;gap:6px;align-items:center;margin-bottom:3px;flex-wrap:wrap}
+.action b{font-family:var(--mono);font-size:12px}
+.dry{font-size:10px;font-family:var(--mono);color:var(--violet);border:1px solid #4c1d95;border-radius:999px;padding:1px 6px}
+.gate{font-size:10px;font-family:var(--mono);color:var(--orange);border:1px solid #7c2d12;border-radius:999px;padding:1px 6px}
+.approve{display:flex;gap:8px;margin-top:8px}
+.approve button{flex:1;padding:11px;border-radius:10px;font-weight:800;cursor:pointer;font-size:14px}
+.btn-ok{background:var(--green);border:0;color:#04130a}
+.btn-hold{background:transparent;border:1px solid var(--line);color:var(--text)}
+.status-pill{font-family:var(--mono);font-size:12px;padding:6px 10px;border-radius:8px;background:#1e1b4b;color:#c4b5fd;display:inline-block}
+.audit{font-family:var(--mono);font-size:11.5px;color:var(--mute);max-height:180px;overflow:auto}
+.audit div{padding:3px 0;border-bottom:1px solid #18222d}
+.meter{display:flex;gap:14px;font-family:var(--mono);font-size:12px;color:var(--mute);margin-top:10px}
+.meter b{color:var(--text)}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-weight:600}
+.err{background:#2a0b0b;border:1px solid var(--red);padding:10px;border-radius:10px;margin-top:10px;font-size:13px}
+
+.btnrow{display:flex;gap:8px;margin:10px 0 4px}
+.btnrow button{flex:1;padding:9px;border-radius:10px;border:1px solid #155e75;background:#0b2530;color:var(--cyan);font-weight:700;cursor:pointer;font-size:13px}
+.modal{position:fixed;inset:0;background:rgba(2,6,10,.78);display:none;align-items:flex-start;justify-content:center;padding:28px 14px;z-index:20;overflow:auto}
+.modal.open{display:flex}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:980px;width:100%;padding:20px 22px}
+.sheet h3{margin:0;font-size:18px;letter-spacing:.06em}
+.sheet .hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.sheet .hdr .sp{margin-left:auto;display:flex;gap:8px}
+.sheet .hdr button{padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;font-weight:600}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:800px){.rgrid{grid-template-columns:1fr}}
+.rcard{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel2)}
+.rcard.full{grid-column:1/-1}
+.rcard h4{margin:0 0 8px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);display:flex;gap:8px;align-items:center}
+.rcard p,.rcard li{font-size:13.5px;margin:4px 0}
+.rcard ul{margin:4px 0;padding-left:18px}
+.mono{font-family:var(--mono);font-size:12px;word-break:break-all}
+mark{padding:0 3px;border-radius:4px;color:inherit}
+mark.pos{background:#7f1d1d}mark.neg{background:#334155;text-decoration:line-through}mark.unc{background:#78350f}mark.fac{background:#164e63}
+.legend{font-size:11.5px;color:var(--mute);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap}
+.repro{padding:10px 12px;border-radius:10px;font-size:13.5px;margin-top:8px}
+.repro.ok{background:#052e16;border:1px solid #166534}.repro.bad{background:#2a0b0b;border:1px solid var(--red)}
+.banner{background:#1e1b4b;color:#c4b5fd;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-align:center;padding:6px 12px;border-bottom:1px solid #312e81}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="reactor" id="reactor"></div>
+    <div><h1>J.A.R.V.I.S. DISPATCH</h1><small id="company">Voice-first AI dispatcher</small></div></div>
+  <div class="chips" id="chips"></div>
+</header>
+<div class="banner">DRY RUN DEMO · synthetic company and customers · no calls, texts, pages or dispatches are sent</div>
+
+<main>
+  <!-- column 1: call -->
+  <section class="panel">
+    <h2>Incoming call <span id="callid" class="tag"></span></h2>
+    <div class="samples" id="samples"></div>
+    <label>Caller ID</label>
+    <input id="phone" placeholder="555-0142">
+    <div style="height:8px"></div>
+    <label>What the caller says (type, pick a sample, or use the mic)</label>
+    <textarea id="transcript" placeholder="My heat stopped working and I smell something unusual..."></textarea>
+    <div class="row">
+      <button class="mic" id="mic" title="Speak as the customer">🎙</button>
+      <button class="primary" id="go">Answer call</button>
+    </div>
+    <label style="display:flex;gap:6px;align-items:center;margin-top:10px"><input type="checkbox" id="speak" checked style="width:auto"> Speak replies out loud</label>
+    <div class="convo" id="convo"></div>
+    <div id="error"></div>
+  </section>
+
+  <!-- column 2: timeline -->
+  <section class="panel">
+    <h2>Decision timeline <span class="tag">every step traced to Arize</span></h2>
+    <div class="timeline" id="timeline"><div class="empty">Answer a call to watch JARVIS reason step by step.</div></div>
+    <div class="meter" id="meter"></div>
+  </section>
+
+  <!-- column 3: work order -->
+  <section class="panel">
+    <h2>Work order <span class="tag">dry run</span></h2>
+    <div id="wo"><div class="empty">No work order yet.</div></div>
+    <div class="sub">Audit trail (SurrealDB)</div>
+    <div class="audit" id="audit"></div>
+  </section>
+</main>
+
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let STATUS = null, current = null, lastReply = "";
+
+async function loadStatus(){
+  try{
+    const r = await fetch("/api/status"); STATUS = await r.json();
+    $("#company").textContent = STATUS.company.name + " · fictional demo company";
+    $("#chips").innerHTML = STATUS.integrations.map(i =>
+      `<div class="chip ${esc(i.mode)}" title="${esc(i.detail)}"><span class="dot"></span>${esc(i.name)} <span class="m">${esc(i.mode.toUpperCase())}</span></div>`).join("");
+    if(!$("#samples").children.length){
+      $("#samples").innerHTML = STATUS.sample_calls.map((c,i) =>
+        `<button class="sample" data-i="${i}"><b>${esc(c.label)}</b><span>${esc(c.caller_phone)}</span></button>`).join("");
+      document.querySelectorAll(".sample").forEach(b => b.onclick = () => {
+        const c = STATUS.sample_calls[+b.dataset.i]; $("#transcript").value = c.transcript; $("#phone").value = c.caller_phone; });
+    }
+  }catch(e){ console.error(e) }
+}
+
+async function loadAudit(){
+  try{
+    const r = await fetch("/api/workorders"); const d = await r.json();
+    $("#audit").innerHTML = (d.audit||[]).map(a => `<div>${esc((a.at||"").slice(11,19))} ${esc(a.event||a.step||"")} ${esc(a.work_order||"")} ${a.priority?esc(a.priority):""} ${a.approved!==undefined?(a.approved?"APPROVED":"HELD"):""}${a.reproduced!==undefined?(a.reproduced?"REPRODUCED":"DIVERGED"):""}</div>`).join("") || "<div>No events yet</div>";
+  }catch(e){}
+}
+
+function stepCard(ev){
+  const id = "step-"+ev.id;
+  let el = document.getElementById(id);
+  if(!el){ el = document.createElement("div"); el.id = id; $("#timeline").appendChild(el); }
+  el.className = "step " + (ev.status||"ok");
+  let extra = "";
+  const d = ev.data || {};
+  if(ev.id===5 && d.screenshot) extra += `<img class="shot" src="data:image/jpeg;base64,${d.screenshot}" alt="Page captured by the cloud browser">`;
+  if(ev.id===6 && d.decision){
+    extra += `<table><tr><th>Tech</th><th>OK</th><th>ETA</th><th>Notes</th></tr>` + d.decision.ranking.map(r =>
+      `<tr><td>${esc(r.name)}${r.on_call?" ☎":""}</td><td>${r.eligible?"✓":"✗"}</td><td>${r.eta_hours}h</td><td>${esc(r.notes.join("; "))}</td></tr>`).join("") + `</table>`;
+  }
+  const body = JSON.stringify(Object.fromEntries(Object.entries(d).filter(([k])=>k!=="screenshot")), null, 2);
+  el.innerHTML = `<div class="top"><span class="num">${String(ev.id).padStart(2,"0")}</span><span class="title">${esc(ev.title)}</span>
+    <span class="tag sponsor">${esc(ev.sponsor)}</span><span class="tag ${esc(ev.mode)}">${esc((ev.mode||"").toUpperCase())}</span>
+    <span class="ms">${ev.ms!=null? ev.ms+" ms":""}</span></div>
+    <div class="detail">${esc(ev.detail)}</div>${extra}
+    <details><summary>raw data</summary><pre>${esc(body)}</pre></details>`;
+}
+
+function bubble(who, text, cls){
+  const b = document.createElement("div");
+  b.className = "bubble " + cls;
+  b.innerHTML = `<div class="who"><span>${esc(who)}</span>${cls.includes("jarvis")?'<button class="replay">▶ replay</button>':""}</div>${esc(text)}`;
+  const rp = b.querySelector(".replay"); if(rp) rp.onclick = () => speak(text, true);
+  $("#convo").appendChild(b);
+}
+
+function renderWO(r){
+  const wo = r.work_order, dec = r.decision, c = r.customer;
+  const evs = r.evals.map(e => {
+    const cls = e.passed==null?"na":(e.passed?"pass":"fail");
+    const icon = e.passed==null?"–":(e.passed?"✓":"✗");
+    return `<div class="ev ${cls}"><span class="i">${icon}</span><div><b>${esc(e.name.replaceAll("_"," "))}</b>${e.score!=null?" ("+e.score+")":""}<br><span style="color:var(--mute)">${esc(e.detail)}</span></div></div>`;
+  }).join("");
+  const acts = (wo.proposed_actions||[]).map(a => `<div class="action"><div class="a"><b>${esc(a.action)}</b><span class="dry">DRY RUN</span>${a.requires_approval?'<span class="gate">NEEDS APPROVAL</span>':""}</div>${esc(a.detail)}</div>`).join("");
+  const hist = (r.customer && STATUS) ? "" : "";
+  $("#wo").innerHTML = `
+    <div class="wo-head"><span class="prio ${esc(dec.priority)}">${esc(dec.priority)} ${esc(dec.priority_label)}</span>
+      <span class="score">${r.score!=null? Math.round(r.score*100)+"%":"–"}</span><span style="color:var(--mute);font-size:12px">eval score</span></div>
+    <div class="kv">
+      <div>Customer</div><div>${esc(c.name)} · ${esc(c.plan||"")}</div>
+      <div>Address</div><div>${esc(c.address||"")}</div>
+      <div>Equipment</div><div>${esc((c.equipment||{}).type||"")}</div>
+      <div>Technician</div><div>${esc(wo.tech_name||"Human dispatcher")}</div>
+      <div>Window</div><div>${esc(wo.window)}</div>
+      <div>SLA</div><div>${esc(dec.sla_hours)}h${wo.trigger?` · trigger <b style="color:var(--red)">${esc(wo.trigger)}</b>`:""}</div>
+      <div>Record</div><div style="font-family:var(--mono);font-size:12px">${esc(r.work_order_id)}</div>
+    </div>
+    <div class="btnrow"><button id="rcpt">🧾 Decision Receipt</button><button id="rply">↻ Replay (dry run)</button></div>
+    <div id="replayout"></div>
+    <div class="sub">Evaluation checks</div><div class="evals">${evs}</div>
+    <div class="sub">Proposed actions</div>${acts||'<div class="empty">None</div>'}
+    <div id="approval"><div class="approve"><button class="btn-ok" id="ap">Approve dispatch</button><button class="btn-hold" id="hold">Hold for human</button></div></div>`;
+  $("#rcpt").onclick = () => openReceipt(r.work_order_id);
+  $("#rply").onclick = () => doReplay(r.work_order_id, "#replayout");
+  $("#ap").onclick = () => decide(true);
+  $("#hold").onclick = () => decide(false);
+}
+
+async function decide(approve){
+  if(!current) return;
+  const r = await fetch("/api/decision",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({work_order_id: current.work_order_id, approve})});
+  const d = await r.json();
+  if(d.error){ $("#approval").innerHTML = `<div class="err">${esc(d.error)}</div>`; return; }
+  const rec = (d.receipts||[]).map(x => `<div class="action"><div class="a"><b>${esc(x.action)}</b><span class="dry">DRY RUN</span></div>${esc(x.result)}</div>`).join("");
+  $("#approval").innerHTML = `<div style="margin-top:8px"><span class="status-pill">${esc(d.work_order.status)}</span></div>${rec}`;
+  stepCard({id:10,title:approve?"Human approved":"Held for human",sponsor:"Human in the loop",mode:"live",status:approve?"ok":"warn",
+    detail: approve? `${(d.receipts||[]).length} action(s) executed as DRY RUN receipts; nothing left the building` : "No action taken; queued for a human dispatcher"});
+  loadAudit();
+}
+
+let audioEl = null;
+async function speak(text, force){
+  if(!$("#speak").checked && !force) return;
+  try{
+    if(audioEl){ audioEl.pause(); }
+    speechSynthesis.cancel();
+    const r = await fetch("/api/tts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+    if(r.status===200){
+      const url = URL.createObjectURL(await r.blob()); audioEl = new Audio(url); await audioEl.play(); return;
+    }
+  }catch(e){ console.warn(e) }
+  const u = new SpeechSynthesisUtterance(text);
+  const v = speechSynthesis.getVoices().find(v => /en-GB/i.test(v.lang) && /male|daniel|arthur|george/i.test(v.name)) ||
+            speechSynthesis.getVoices().find(v => /en-GB/i.test(v.lang));
+  if(v) u.voice = v; u.rate = 1.02; speechSynthesis.speak(u);
+}
+
+async function answer(){
+  const transcript = $("#transcript").value.trim();
+  if(!transcript) return;
+  $("#go").disabled = true; $("#reactor").classList.add("busy"); $("#error").innerHTML = "";
+  $("#timeline").innerHTML = ""; $("#convo").innerHTML = ""; $("#wo").innerHTML = '<div class="empty">Building work order...</div>'; $("#meter").innerHTML = "";
+  bubble("Customer", transcript, "cust");
+  try{
+    const r = await fetch("/api/call",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({transcript, caller_phone: $("#phone").value.trim() || null})});
+    const reader = r.body.getReader(); const dec = new TextDecoder(); let buf = "";
+    while(true){
+      const {value, done} = await reader.read(); if(done) break;
+      buf += dec.decode(value,{stream:true});
+      let i; while((i = buf.indexOf("\n")) >= 0){
+        const line = buf.slice(0,i).trim(); buf = buf.slice(i+1); if(!line) continue;
+        const ev = JSON.parse(line);
+        if(ev.type==="call_start") $("#callid").textContent = ev.call_id;
+        else if(ev.type==="step") stepCard(ev);
+        else if(ev.type==="final"){
+          current = ev; lastReply = ev.reply;
+          // the transcript bubble shows the redacted version once known
+          const s1 = document.querySelector("#step-1 pre");
+          bubble("JARVIS", ev.reply, "jarvis" + (ev.work_order.trigger ? " alert" : ""));
+          renderWO(ev);
+          $("#meter").innerHTML = `<span>time <b>${ev.seconds}s</b></span><span>tokens <b>${ev.tokens}</b></span><span>est. cost <b>$${ev.cost.toFixed(4)}</b></span>`;
+          speak(ev.reply);
+        } else if(ev.type==="error"){ $("#error").innerHTML = `<div class="err">${esc(ev.message)}</div>`; }
+      }
+    }
+  }catch(e){ $("#error").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  $("#go").disabled = false; $("#reactor").classList.remove("busy");
+  loadAudit(); loadStatus();
+}
+$("#go").onclick = answer;
+
+// customer voice in (browser speech recognition)
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+$("#mic").onclick = () => {
+  if(!SR){ alert("Speech recognition needs Chrome or Safari. You can type instead."); return; }
+  if(rec){ rec.stop(); return; }
+  rec = new SR(); rec.lang = "en-US"; rec.interimResults = true; rec.continuous = true;
+  const base = ""; $("#transcript").value = "";
+  rec.onresult = e => { $("#transcript").value = Array.from(e.results).map(r => r[0].transcript).join(" "); };
+  rec.onend = () => { $("#mic").classList.remove("on"); rec = null; };
+  rec.start(); $("#mic").classList.add("on");
+};
+
+function badge(mode){ return `<span class="tag ${esc(mode)}">${esc(String(mode||"").toUpperCase())}</span>`; }
+function highlight(text, ev){
+  let h = esc(text);
+  const marks = [];
+  (ev.safety.positive||[]).forEach(x => marks.push([x.matched,"pos"]));
+  (ev.safety.negated||[]).forEach(x => marks.push([x.matched,"neg"]));
+  (ev.safety.uncertain||[]).forEach(x => marks.push([x.matched,"unc"]));
+  Object.values(ev.intake_factors||{}).forEach(v => marks.push([v,"fac"]));
+  (ev.policy||[]).forEach(p => marks.push([p.matched,"unc"]));
+  marks.sort((a,b) => b[0].length - a[0].length);
+  const done = new Set();
+  for(const [phrase, cls] of marks){
+    if(!phrase || done.has(phrase.toLowerCase())) continue; done.add(phrase.toLowerCase());
+    const e = esc(phrase).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    h = h.replace(new RegExp("(?![^<]*>)(" + e + ")", "i"), `<mark class="${cls}">$1</mark>`);
+  }
+  return h;
+}
+async function openReceipt(wid){
+  const r = await (await fetch("/api/receipt?work_order_id=" + encodeURIComponent(wid))).json();
+  if(r.error){ alert(r.error); return; }
+  const ru = r.rules_applied, sd = r.service_doc, dy = r.daytona, db = r.surrealdb, az = r.arize, ap = r.approval, ev = r.evidence;
+  const negs = (ev.safety.negated||[]).map(x=>`<li>Negated: "${esc(x.evidence)}" (no trigger)</li>`).join("");
+  const uncs = (ev.safety.uncertain||[]).map(x=>`<li>Uncertain: "${esc(x.evidence)}" (human review)</li>`).join("");
+  const poss = (ev.safety.positive||[]).map(x=>`<li><b>${esc(x.id)}</b> fired on "${esc(x.evidence)}"</li>`).join("");
+  const facs = Object.entries(ev.intake_factors||{}).map(([k,v])=>`<li>${esc(k.replaceAll("_"," "))}: "${esc(v)}"</li>`).join("");
+  $("#sheet").innerHTML = `
+  <div class="hdr"><h3>🧾 DECISION RECEIPT</h3><span class="tag">${esc(r.call_id)}</span><span class="tag">${esc(r.work_order_id)}</span>
+    <div class="sp"><button id="m-replay">↻ Replay (dry run)</button><button id="m-dl">Download JSON</button><button id="m-close">Close</button></div></div>
+  <div class="rgrid">
+    <div class="rcard full"><h4>1 · Transcript evidence</h4><p>${highlight(r.transcript, ev)}</p>
+      <div class="legend"><span><mark class="pos">safety trigger</mark></span><span><mark class="neg">negated</mark></span><span><mark class="unc">uncertain / policy</mark></span><span><mark class="fac">dispatch factor</mark></span></div></div>
+    <div class="rcard"><h4>2 · Rules and factors applied</h4>
+      <p><span class="prio ${esc(ru.priority)}">${esc(ru.priority)} ${esc(ru.priority_label)}</span> SLA ${esc(ru.sla_hours)}h</p>
+      <ul>${poss}${uncs}${negs}${facs}${(ev.policy||[]).map(p=>`<li>Policy ${esc(p.id)}: "${esc(p.matched)}"</li>`).join("")}</ul>
+      <ul>${(ru.reasons||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+      <p>Required: ${esc((ru.required||[]).join(", ")||"none")} · Reply source: <b>${esc(ru.reply_source)}</b></p></div>
+    <div class="rcard"><h4>3 · Service document ${badge(sd.mode)} Anchor Browser</h4>
+      <p><b>${esc(sd.title)}</b></p><p class="mono">${esc(sd.source)}</p>
+      ${sd.fallback_reason?`<p style="color:var(--amber)">${esc(sd.fallback_reason)}</p>`:""}
+      <p>Customer data sent to browser: <b>none</b> (synthetic public docs only)</p></div>
+    <div class="rcard"><h4>4 · Dispatch decision ${badge(dy.mode)} Daytona</h4>
+      <p>${dy.chosen?`<b>${esc(dy.chosen.name)}</b> ETA ${esc(dy.chosen.eta_hours)}h ${dy.chosen.within_sla?"within SLA":"outside SLA"}`:"No eligible tech: human"}</p>
+      <ul>${(dy.candidates||[]).map(c=>`<li>${c.eligible?"✓":"✗"} ${esc(c.name)} ${esc(c.eta_hours)}h ${esc((c.notes||[]).join("; "))}</li>`).join("")}</ul>
+      <p class="mono">sandbox ${esc(dy.sandbox_id||"in-process mock")}${dy.egress_blocked?" · egress blocked":""}${dy.seconds!=null?" · "+esc(dy.seconds)+"s":""}</p>
+      <p class="mono">code sha256 ${esc(dy.code_sha256)}<br>decision sha256 ${esc(dy.decision_sha256)}</p></div>
+    <div class="rcard"><h4>5 · Customer context ${badge(db.mode)} SurrealDB</h4>
+      <p><b>${esc(db.customer)}</b> (${esc(db.customer_id)}) · ${esc((db.equipment||{}).type||"")} · ${esc(db.plan||"")}</p>
+      <ul>${(db.history_consulted||[]).map(h=>`<li>${esc(h.date)} ${esc(h.summary)}${h.tech?" · "+esc(h.tech):""}</li>`).join("")||"<li>No prior work orders</li>"}</ul>
+      <p class="mono">${esc(db.graph_query)}</p></div>
+    <div class="rcard"><h4>6 · Trace and evaluation ${badge(az.mode)} Arize AX</h4>
+      <p>Score <b>${az.score!=null?Math.round(az.score*100)+"%":"n/a"}</b> · project <span class="mono">${esc(az.project)}</span></p>
+      <p class="mono">trace_id ${esc(az.trace_id||"local only (Arize not connected)")}</p>
+      <ul>${(az.evals||[]).filter(e=>e.passed===true||e.passed===false).map(e=>`<li>${e.passed?"✓":"✗"} ${esc(e.name.replaceAll("_"," "))}</li>`).join("")}</ul></div>
+    <div class="rcard full"><h4>7 · Human approval</h4>
+      <p>Status <span class="status-pill">${esc(ap.status)}</span> ${ap.approved_at?"approved "+esc(ap.approved_at):""}${ap.declined_at?"held "+esc(ap.declined_at):""}</p>
+      <ul>${(ap.receipts&&ap.receipts.length?ap.receipts:ap.proposed_actions).map(a=>`<li><b class="mono">${esc(a.action)}</b> ${esc(a.result||(a.requires_approval?"needs approval · dry run":"dry run"))}</li>`).join("")}</ul>
+      <div id="m-replayout"></div></div>
+  </div>
+  <p style="color:var(--mute);font-size:12px;margin-top:10px">${esc(r.data_note)}</p>`;
+  $("#modal").classList.add("open");
+  $("#m-close").onclick = () => $("#modal").classList.remove("open");
+  $("#m-replay").onclick = () => doReplay(wid, "#m-replayout");
+  $("#m-dl").onclick = () => { const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(r,null,2)],{type:"application/json"})); a.download = r.call_id + "-receipt.json"; a.click(); };
+}
+$("#modal").onclick = e => { if(e.target.id === "modal") $("#modal").classList.remove("open"); };
+async function doReplay(wid, target){
+  $(target).innerHTML = `<div class="repro">Replaying recorded inputs...</div>`;
+  const r = await (await fetch("/api/replay",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({work_order_id: wid})})).json();
+  if(r.error){ $(target).innerHTML = `<div class="repro bad">${esc(r.error)}</div>`; return; }
+  $(target).innerHTML = `<div class="repro ${r.reproduced?"ok":"bad"}">${r.reproduced?"✓ Reproduced":"✗ Diverged"}: rules ${r.rules_match?"match":"differ"}, decision ${r.decision_match?"identical":"different"}, code ${r.code_match?"unchanged":"changed"}.
+    ${esc(r.priority)} → ${esc(r.chosen||"human")} · ${esc(r.sandbox_mode)} sandbox · ${esc(r.seconds)}s · dry run, no actions sent<br>
+    <span class="mono">${esc(r.original_decision_sha256)} vs ${esc(r.replay_decision_sha256)}</span></div>`;
+  loadAudit();
+}
+speechSynthesis.getVoices();
+loadStatus(); loadAudit(); setInterval(loadStatus, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+fastapi>=0.115
+uvicorn>=0.30
+python-dotenv>=1.0
+httpx>=0.27
+anthropic>=0.40
+daytona>=0.20
+anchorbrowser>=1.0
+elevenlabs>=2.0
+surrealdb==2.0.0
+arize-otel>=0.8
+openinference-instrumentation-anthropic>=0.1

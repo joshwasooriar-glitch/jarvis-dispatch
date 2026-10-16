@@ -1,0 +1,115 @@
+{
+  "_comment": "Safety triggers are configuration, not model behavior. They run on the raw transcript BEFORE any LLM call. Scripts are spoken verbatim with nothing appended, and they only claim what the system actually does (it flags the call; it does not promise a callback). Negated (\"I don't smell gas\") and historical (\"we had a gas leak last year\") mentions do not fire; uncertain mentions and model-raised hazards go to human review.",
+  "triggers": [
+    {
+      "id": "gas_odor",
+      "severity": "life_safety",
+      "required_skills": [
+        "gas"
+      ],
+      "required_certs": [
+        "gas_certified"
+      ],
+      "doc": "/site/sop/gas-odor.html",
+      "patterns": [
+        "smell gas",
+        "gas smell",
+        "smells like gas",
+        "gas leak",
+        "rotten egg",
+        "sulfur",
+        "smell something unusual",
+        "unusual smell",
+        "strange smell",
+        "weird smell",
+        "hissing"
+      ],
+      "script": "Your safety comes first. That smell could be a gas leak. Please get everyone out of the home now, and do not flip light switches, use appliances, or light anything on the way out. Once you are outside, call 911 or your gas utility's emergency line. I have marked this as an emergency for our team."
+    },
+    {
+      "id": "carbon_monoxide",
+      "severity": "life_safety",
+      "required_skills": [
+        "gas"
+      ],
+      "required_certs": [
+        "gas_certified"
+      ],
+      "doc": "/site/sop/carbon-monoxide.html",
+      "patterns": [
+        "carbon monoxide",
+        "co alarm",
+        "co detector",
+        "detector is going off",
+        "alarm is beeping",
+        "dizzy",
+        "headache and nausea"
+      ],
+      "script": "Your safety comes first. A carbon monoxide alarm or those symptoms can be serious. Please get everyone, including pets, outside into fresh air now and call 911 from outside. Do not go back in until responders say it is safe. I have marked this as an emergency for our team."
+    },
+    {
+      "id": "electrical_fire",
+      "severity": "life_safety",
+      "required_skills": [
+        "electrical"
+      ],
+      "required_certs": [],
+      "doc": "/site/sop/electrical-burning.html",
+      "patterns": [
+        "smoke",
+        "sparks",
+        "sparking",
+        "burning smell",
+        "smells like burning",
+        "on fire",
+        "flames",
+        "melting"
+      ],
+      "script": "Your safety comes first. If you see smoke, sparks, or flames, leave the home now and call 911 from outside. If there is only a faint burning smell and no smoke, turn the system off at the thermostat and stay away from the unit. I have marked this as an emergency for our team."
+    }
+  ],
+  "policy_requests": [
+    {
+      "id": "refund_or_discount",
+      "patterns": [
+        "refund",
+        "as free",
+        "for free",
+        "free of charge",
+        "no charge",
+        "discount",
+        "waive",
+        "credit my",
+        "money back",
+        "chargeback"
+      ],
+      "action": "human_handoff",
+      "say": "I can't approve refunds, discounts, or billing changes, but I have passed your request to our billing team and they will follow up."
+    },
+    {
+      "id": "instruction_override",
+      "patterns": [
+        "ignore your previous instructions",
+        "ignore previous instructions",
+        "ignore all instructions",
+        "you are now",
+        "system prompt",
+        "developer mode"
+      ],
+      "action": "flag",
+      "say": ""
+    }
+  ],
+  "review_script": "Thanks for telling me. Because you mentioned a possible safety concern, I have flagged this call for a human dispatcher to review. If at any point you smell gas, see smoke, or a carbon monoxide alarm sounds, leave the home and call 911 from outside.",
+  "prohibited_reply_patterns": [
+    "\\$\\s?\\d",
+    "\\b(refund|discount|credit)s?\\b[^.]{0,40}\\b(approved|applied|processed|issued|granted)\\b",
+    "\\b(you'?ll|you will|we'?ll|we will|i'?ll|i will)\\b[^.]{0,30}\\b(refund|discount|waive|credit)",
+    "\\b(for free|free of charge|no charge|at no cost|on the house)\\b",
+    "\\bguarantee",
+    "\\b(it'?s|it is) (perfectly )?safe\\b(?! ?(say|to say))",
+    "\\bnothing to worry\\b",
+    "\\byou can stay\\b",
+    "\\b(probably|likely|sounds like) (a|the|your) (bad|failed|faulty|broken|dirty) \\w+"
+  ]
+}
