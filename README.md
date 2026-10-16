@@ -11,6 +11,8 @@ cd jarvis-dispatch
 ./run.sh
 ```
 
+Then open http://localhost:8000 in your browser.
+
 Works with **zero API keys**: every sponsor sits behind a small adapter with a local mock, and the header chips show LIVE or MOCK for each one.
 
 ### Add keys
